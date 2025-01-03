@@ -26,8 +26,9 @@ type Response struct {
 	Alias string `json:"alias,omitempty"`
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.50.3 --name=URLSaver
 type URLSaver interface {
-	SaveURl(urlToSave string, alias string) (int64, error)
+	SaveURL(urlToSave string, alias string) (int64, error)
 }
 
 func New(log *slog.Logger, URLSaver URLSaver) http.HandlerFunc {
@@ -44,7 +45,7 @@ func New(log *slog.Logger, URLSaver URLSaver) http.HandlerFunc {
 		err := render.DecodeJSON(r.Body, &req)
 
 		if err != nil {
-			log.Error("failed to decode request body", err)
+			log.Error("failed to decode request body", sl.Err(err))
 
 			render.JSON(w, r, response.Error("failed to decode request body"))
 
@@ -69,7 +70,7 @@ func New(log *slog.Logger, URLSaver URLSaver) http.HandlerFunc {
 			alias = random.NewRandomString(aliasLegth)
 		}
 
-		id, err := URLSaver.SaveURl(req.URL, alias)
+		id, err := URLSaver.SaveURL(req.URL, alias)
 		if errors.Is(err, db.ErrUrlExists) {
 			log.Info("url already exists", slog.String("alias", alias))
 

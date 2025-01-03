@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/20grizz03/restApiURLShortener/internal/config"
 	"github.com/20grizz03/restApiURLShortener/internal/db/sqlite"
+	"github.com/20grizz03/restApiURLShortener/internal/http-server/handlers/deleteURL"
+	"github.com/20grizz03/restApiURLShortener/internal/http-server/handlers/redirect"
 	save "github.com/20grizz03/restApiURLShortener/internal/http-server/handlers/url"
 	mwLogger "github.com/20grizz03/restApiURLShortener/internal/http-server/middleware/logger"
 	"github.com/20grizz03/restApiURLShortener/internal/lib/logger/hendlers/slogpretty"
@@ -34,8 +36,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = db
-
 	router := chi.NewRouter()
 
 	// middlewares
@@ -46,7 +46,17 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(log, db))
+	router.Route("/url", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("url-shortener", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+
+		r.Post("/", save.New(log, db))
+		r.Delete("/{alias}", deleteURL.New(log, db))
+	})
+
+	router.Get("/{alias}", redirect.New(log, db))
+
 	log.Info("server started", slog.String("address", cfg.HTTPServer.Address))
 
 	srv := &http.Server{

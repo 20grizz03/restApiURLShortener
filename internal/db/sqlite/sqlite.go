@@ -38,7 +38,7 @@ func New(storagePath string) (*DB, error) {
 
 }
 
-func (db *DB) SaveURl(urlToSave string, alias string) (int64, error) {
+func (db *DB) SaveURL(urlToSave string, alias string) (int64, error) {
 	const op = "db.sqlite.SaveURl"
 
 	stmt, err := db.db.Prepare(
@@ -63,7 +63,7 @@ func (db *DB) GetUrl(alias string) (string, error) {
 	const op = "db.sqlite.GetUrl"
 
 	stmt, err := db.db.Prepare(
-		`select url from url wheare alias = ?`,
+		`select url from url where alias = ?`,
 	)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
